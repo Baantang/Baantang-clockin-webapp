@@ -27,6 +27,9 @@ export default async function AdminLayout({
           <Link href="/admin/messages" className="hover:underline">
             LINE Messages
           </Link>
+          <Link href="/admin/account" className="hover:underline">
+            Account
+          </Link>
           <span className="ml-auto flex items-center gap-4">
             <span className="text-gray-400">{session.username}</span>
             <AdminSignOutLink />
