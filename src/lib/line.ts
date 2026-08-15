@@ -34,3 +34,24 @@ export async function fetchLineDisplayName(
     return null;
   }
 }
+
+export async function fetchLineMessageContent(
+  messageId: string
+): Promise<{ data: Buffer; mimeType: string } | null> {
+  const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  if (!accessToken) return null;
+
+  try {
+    const res = await fetch(
+      `https://api-data.line.me/v2/bot/message/${messageId}/content`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) return null;
+
+    const mimeType = res.headers.get("content-type") ?? "application/octet-stream";
+    const data = Buffer.from(await res.arrayBuffer());
+    return { data, mimeType };
+  } catch {
+    return null;
+  }
+}

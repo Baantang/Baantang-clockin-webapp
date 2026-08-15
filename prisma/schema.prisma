@@ -39,12 +39,15 @@ model Admin {
 }
 
 model LineMessage {
-  id           String   @id @default(cuid())
-  lineUserId   String?
-  displayName  String?
-  groupId      String?
-  text         String
-  timestamp    DateTime @default(now())
+  id            String   @id @default(cuid())
+  lineUserId    String?
+  displayName   String?
+  groupId       String?
+  messageType   String   @default("text") // "text" or "image"
+  text          String?
+  imageData     Bytes?
+  imageMimeType String?
+  timestamp     DateTime @default(now())
 
   @@index([groupId])
 }

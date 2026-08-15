@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { fetchLineDisplayName, verifyLineSignature } from "@/lib/line";
+import {
+  fetchLineDisplayName,
+  fetchLineMessageContent,
+  verifyLineSignature,
+} from "@/lib/line";
 
 interface LineEvent {
   type: string;
@@ -12,6 +16,7 @@ interface LineEvent {
     roomId?: string;
   };
   message?: {
+    id: string;
     type: string;
     text?: string;
   };
@@ -28,8 +33,9 @@ export async function POST(request: NextRequest) {
   const body = JSON.parse(rawBody) as { events: LineEvent[] };
 
   for (const event of body.events ?? []) {
-    if (event.type !== "message" || event.message?.type !== "text") continue;
+    if (event.type !== "message") continue;
     if (event.source.type !== "group" && event.source.type !== "room") continue;
+    if (event.message?.type !== "text" && event.message?.type !== "image") continue;
 
     const groupId = event.source.groupId ?? event.source.roomId;
     const userId = event.source.userId;
@@ -38,15 +44,33 @@ export async function POST(request: NextRequest) {
       ? await fetchLineDisplayName(userId, event.source.groupId)
       : null;
 
-    await prisma.lineMessage.create({
-      data: {
-        lineUserId: userId ?? null,
-        displayName,
-        groupId: groupId ?? null,
-        text: event.message.text ?? "",
-        timestamp: new Date(event.timestamp),
-      },
-    });
+    if (event.message.type === "text") {
+      await prisma.lineMessage.create({
+        data: {
+          lineUserId: userId ?? null,
+          displayName,
+          groupId: groupId ?? null,
+          messageType: "text",
+          text: event.message.text ?? "",
+          timestamp: new Date(event.timestamp),
+        },
+      });
+    } else {
+      const content = await fetchLineMessageContent(event.message.id);
+      if (!content) continue;
+
+      await prisma.lineMessage.create({
+        data: {
+          lineUserId: userId ?? null,
+          displayName,
+          groupId: groupId ?? null,
+          messageType: "image",
+          imageData: new Uint8Array(content.data),
+          imageMimeType: content.mimeType,
+          timestamp: new Date(event.timestamp),
+        },
+      });
+    }
   }
 
   return NextResponse.json({ ok: true });

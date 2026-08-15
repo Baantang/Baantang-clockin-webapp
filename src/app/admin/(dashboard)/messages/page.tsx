@@ -4,6 +4,13 @@ export default async function MessagesPage() {
   const messages = await prisma.lineMessage.findMany({
     orderBy: { timestamp: "desc" },
     take: 200,
+    select: {
+      id: true,
+      displayName: true,
+      timestamp: true,
+      messageType: true,
+      text: true,
+    },
   });
 
   return (
@@ -25,7 +32,16 @@ export default async function MessagesPage() {
                 <span>{msg.displayName ?? "Unknown sender"}</span>
                 <span>{msg.timestamp.toLocaleString()}</span>
               </div>
-              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+              {msg.messageType === "image" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/admin/messages/${msg.id}/image`}
+                  alt="LINE attachment"
+                  className="max-w-xs max-h-64 rounded-md border border-gray-200"
+                />
+              ) : (
+                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+              )}
             </div>
           ))}
         </div>
