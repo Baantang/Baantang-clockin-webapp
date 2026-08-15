@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Employee {
+  id         String      @id @default(cuid())
+  name       String
+  pinHash    String
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  timeEntries TimeEntry[]
+}
+
+model TimeEntry {
+  id         String   @id @default(cuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  type       String // "IN" or "OUT"
+  timestamp  DateTime @default(now())
+  latitude   Float?
+  longitude  Float?
+  accuracy   Float?
+
+  @@index([employeeId])
+}
+
+model Admin {
+  id           String @id @default(cuid())
+  username     String @unique
+  passwordHash String
+}
+
+model LineMessage {
+  id           String   @id @default(cuid())
+  lineUserId   String?
+  displayName  String?
+  groupId      String?
+  text         String
+  timestamp    DateTime @default(now())
+
+  @@index([groupId])
+}
