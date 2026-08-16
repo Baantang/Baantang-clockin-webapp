@@ -6,6 +6,7 @@ import {
   bangkokWeekday,
   buildAttendanceSummary,
   dateKey,
+  formatHoursMinutes,
 } from "@/lib/attendance";
 
 type Period = "day" | "week" | "month" | "all";
@@ -193,7 +194,7 @@ export default async function SummaryPage(props: PageProps<"/admin/summary">) {
                   <td className="px-4 py-3 text-warn">{row.lateDays}</td>
                   <td className="px-4 py-3 text-danger">{row.absentDays}</td>
                   <td className="px-4 py-3">{row.leaveDays}</td>
-                  <td className="px-4 py-3">{row.totalHours} ชม.</td>
+                  <td className="px-4 py-3">{formatHoursMinutes(row.totalHours)}</td>
                 </tr>
               ))
             )}
@@ -206,7 +207,7 @@ export default async function SummaryPage(props: PageProps<"/admin/summary">) {
                 <td className="px-4 py-3 text-warn">{totals.lateDays}</td>
                 <td className="px-4 py-3 text-danger">{totals.absentDays}</td>
                 <td className="px-4 py-3">{totals.leaveDays}</td>
-                <td className="px-4 py-3">{Math.round(totals.totalHours * 10) / 10} ชม.</td>
+                <td className="px-4 py-3">{formatHoursMinutes(totals.totalHours)}</td>
               </tr>
             </tfoot>
           )}

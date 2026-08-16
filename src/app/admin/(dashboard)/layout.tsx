@@ -2,10 +2,12 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminSignOutLink from "./AdminSignOutLink";
+import Logo from "@/components/Logo";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "วันนี้" },
   { href: "/admin/summary", label: "สรุปเวลาทำงาน" },
+  { href: "/admin/timelog", label: "ประวัติเวลา" },
   { href: "/admin/employees", label: "พนักงาน" },
   { href: "/admin/locations", label: "สถานที่" },
   { href: "/admin/messages", label: "ข้อความ LINE" },
@@ -27,7 +29,10 @@ export default async function AdminLayout({
     <div className="flex-1 flex flex-col">
       <header className="border-b border-border bg-card">
         <nav className="max-w-5xl mx-auto flex items-center gap-1 px-6 py-3 text-sm overflow-x-auto">
-          <span className="font-semibold mr-3 whitespace-nowrap">ผู้ดูแลระบบ</span>
+          <span className="flex items-center gap-2 mr-3 whitespace-nowrap">
+            <Logo size={28} />
+            <span className="font-semibold">ผู้ดูแลระบบ</span>
+          </span>
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}

@@ -1,11 +1,13 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function Home() {
   return (
     <main className="flex-1 flex items-center justify-center p-6">
       <div className="text-center space-y-6 w-full max-w-xs">
-        <div>
-          <h1 className="text-2xl font-semibold">ระบบลงเวลาทำงาน</h1>
+        <div className="flex flex-col items-center">
+          <Logo size={56} />
+          <h1 className="text-2xl font-semibold mt-4">ระบบลงเวลาทำงาน</h1>
           <p className="text-sm text-muted mt-1">เลือกช่องทางเข้าสู่ระบบ</p>
         </div>
         <div className="flex flex-col items-center gap-3">

@@ -276,3 +276,86 @@ export function buildAttendanceSummary(
     };
   });
 }
+
+/** Formats a decimal hour count (e.g. 152.3) as "152 ชม. 18 นาที". */
+export function formatHoursMinutes(hours: number): string {
+  const totalMinutes = Math.round(hours * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m} นาที`;
+  if (m === 0) return `${h} ชม.`;
+  return `${h} ชม. ${m} นาที`;
+}
+
+// --- Per-employee daily timeline (for the admin attendance-log view) ------
+
+export type TimelineSegment = {
+  startMin: number;
+  endMin: number;
+  late: boolean;
+  locationName: string | null;
+  ongoing: boolean;
+};
+
+export type DayTimeline = {
+  dateKey: string;
+  label: string;
+  segments: TimelineSegment[];
+};
+
+interface TimelineEntry {
+  type: string;
+  timestamp: Date;
+  late: boolean;
+  locationName: string | null;
+}
+
+export function buildDayTimelines(entries: TimelineEntry[]): DayTimeline[] {
+  const byDay = new Map<string, TimelineEntry[]>();
+  for (const e of entries) {
+    const key = dateKey(e.timestamp);
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key)!.push(e);
+  }
+
+  const days: DayTimeline[] = [];
+  for (const [key, dayEntries] of byDay) {
+    const sorted = [...dayEntries].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+    );
+    const segments: TimelineSegment[] = [];
+    let openIn: TimelineEntry | null = null;
+
+    for (const e of sorted) {
+      if (e.type === "IN") {
+        openIn = e;
+      } else if (e.type === "OUT" && openIn) {
+        const start = bangkokHourMinute(openIn.timestamp);
+        const end = bangkokHourMinute(e.timestamp);
+        segments.push({
+          startMin: start.hour * 60 + start.minute,
+          endMin: end.hour * 60 + end.minute,
+          late: openIn.late,
+          locationName: openIn.locationName,
+          ongoing: false,
+        });
+        openIn = null;
+      }
+    }
+
+    if (openIn) {
+      const start = bangkokHourMinute(openIn.timestamp);
+      segments.push({
+        startMin: start.hour * 60 + start.minute,
+        endMin: start.hour * 60 + start.minute + 20,
+        late: openIn.late,
+        locationName: openIn.locationName,
+        ongoing: true,
+      });
+    }
+
+    days.push({ dateKey: key, label: formatThaiDate(sorted[0].timestamp), segments });
+  }
+
+  return days.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
+}

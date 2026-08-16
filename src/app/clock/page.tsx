@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import ClockPanel from "./ClockPanel";
 import { prisma } from "@/lib/db";
-import { colorGroupMeta, formatThaiDate, formatThaiTime } from "@/lib/attendance";
+import { colorGroupMeta } from "@/lib/attendance";
 
 export default async function ClockPage() {
   const session = await getSession();
@@ -16,13 +16,11 @@ export default async function ClockPage() {
     include: { role: true },
   });
 
-  const recentEntries = await prisma.timeEntry.findMany({
+  const lastEntry = await prisma.timeEntry.findFirst({
     where: { employeeId: session.employeeId },
     orderBy: { timestamp: "desc" },
-    take: 6,
   });
 
-  const lastEntry = recentEntries[0];
   const meta = employee ? colorGroupMeta(employee.colorGroup) : null;
 
   return (
@@ -63,34 +61,6 @@ export default async function ClockPage() {
             </Link>
           </div>
         </div>
-
-        {recentEntries.length > 0 && (
-          <div className="app-card p-6 mt-4">
-            <h2 className="text-sm font-semibold mb-3">ประวัติล่าสุด</h2>
-            <ul className="space-y-2">
-              {recentEntries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-muted">{formatThaiDate(entry.timestamp)}</span>
-                  <span className="font-medium">
-                    {entry.type === "IN" ? "เข้างาน" : "ออกงาน"} ·{" "}
-                    {formatThaiTime(entry.timestamp)}
-                  </span>
-                  {entry.type === "IN" && entry.late && (
-                    <span
-                      className="app-badge"
-                      style={{ background: "var(--color-warn-bg)", color: "var(--color-warn)" }}
-                    >
-                      สาย
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </main>
   );
