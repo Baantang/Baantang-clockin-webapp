@@ -29,7 +29,7 @@ export default function LoginForm({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Login failed");
+      setError(data.error ?? "เข้าสู่ระบบไม่สำเร็จ");
       return;
     }
 
@@ -39,8 +39,8 @@ export default function LoginForm({
 
   if (employees.length === 0) {
     return (
-      <p className="text-center text-sm text-gray-500">
-        No employees set up yet. Ask your admin to add one.
+      <p className="text-center text-sm text-muted">
+        ยังไม่มีรายชื่อพนักงาน กรุณาติดต่อผู้ดูแลระบบ
       </p>
     );
   }
@@ -48,11 +48,11 @@ export default function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
+        <label className="block text-sm font-medium mb-1.5">ชื่อพนักงาน</label>
         <select
           value={employeeId}
           onChange={(e) => setEmployeeId(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-base"
+          className="app-input"
         >
           {employees.map((e) => (
             <option key={e.id} value={e.id}>
@@ -62,25 +62,21 @@ export default function LoginForm({
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">PIN</label>
+        <label className="block text-sm font-medium mb-1.5">รหัส PIN</label>
         <input
           type="password"
           inputMode="numeric"
           autoComplete="off"
           value={pin}
           onChange={(e) => setPin(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-base tracking-widest"
+          className="app-input tracking-widest"
           placeholder="••••"
           required
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-black text-white py-2.5 font-medium disabled:opacity-50"
-      >
-        {loading ? "Signing in..." : "Sign in"}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <button type="submit" disabled={loading} className="app-btn-primary w-full">
+        {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
       </button>
     </form>
   );

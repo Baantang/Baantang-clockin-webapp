@@ -10,12 +10,48 @@ datasource db {
   provider = "postgresql"
 }
 
+// Six fixed color groups employees can be sorted into.
+// Kept as a validated string (like TimeEntry.type) rather than a native
+// enum so the schema works unchanged across providers.
 model Employee {
-  id         String      @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
   pinHash    String
-  active     Boolean     @default(true)
-  createdAt  DateTime    @default(now())
+  active     Boolean  @default(true)
+  colorGroup String   @default("blue") // red | orange | yellow | green | blue | purple
+  createdAt  DateTime @default(now())
+
+  roleId String?
+  role   Role?   @relation(fields: [roleId], references: [id])
+
+  photoData     Bytes?
+  photoMimeType String?
+
+  lineUserId String? @unique
+
+  timeEntries     TimeEntry[]
+  absenceRequests AbsenceRequest[]
+  lineMessages    LineMessage[]
+
+  @@index([roleId])
+}
+
+model Role {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  employees Employee[]
+}
+
+model Location {
+  id           String   @id @default(cuid())
+  name         String
+  latitude     Float
+  longitude    Float
+  radiusMeters Float    @default(150)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
   timeEntries TimeEntry[]
 }
 
@@ -28,8 +64,24 @@ model TimeEntry {
   latitude   Float?
   longitude  Float?
   accuracy   Float?
+  late       Boolean  @default(false) // only meaningful when type == "IN"
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
 
   @@index([employeeId])
+  @@index([locationId])
+}
+
+// Singleton row (id is always "singleton") holding the current work-time
+// configuration. Admin can update it at any time from /admin/settings.
+model Settings {
+  id               String   @id @default("singleton")
+  workStart        String   @default("08:00")
+  workEnd          String   @default("17:00")
+  lateGraceMinutes Int      @default(0)
+  workDays         String   @default("1,2,3,4,5") // 0=Sun .. 6=Sat, comma separated
+  updatedAt        DateTime @updatedAt
 }
 
 model Admin {
@@ -49,5 +101,43 @@ model LineMessage {
   imageMimeType String?
   timestamp     DateTime @default(now())
 
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  absenceRequest AbsenceRequest?
+
   @@index([groupId])
+  @@index([employeeId])
+}
+
+// Absence papers employees send through the LINE group. Admin reviews the
+// originating LineMessage and turns it into a request, then approves or
+// rejects it; approved requests count as excused leave in the summaries.
+model AbsenceRequest {
+  id     String    @id @default(cuid())
+  date   DateTime // the calendar date the employee will be / was absent
+  note   String?
+  status String    @default("pending") // pending | approved | rejected
+
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  lineMessageId String?      @unique
+  lineMessage   LineMessage? @relation(fields: [lineMessageId], references: [id])
+
+  createdAt DateTime  @default(now())
+  decidedAt DateTime?
+
+  @@index([employeeId])
+  @@index([date])
+}
+
+// Cached AI-generated summaries of a batch of LINE messages so admins don't
+// have to re-summarize the same period repeatedly.
+model LineSummary {
+  id          String   @id @default(cuid())
+  periodStart DateTime
+  periodEnd   DateTime
+  summaryText String
+  createdAt   DateTime @default(now())
 }

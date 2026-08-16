@@ -1,66 +1,192 @@
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings";
+import {
+  bangkokDayRange,
+  colorGroupMeta,
+  computeLate,
+  dateKey,
+  formatThaiDate,
+  formatThaiTime,
+  isWorkDay,
+} from "@/lib/attendance";
 
 export default async function AdminDashboardPage() {
-  const entries = await prisma.timeEntry.findMany({
-    orderBy: { timestamp: "desc" },
-    take: 200,
-    include: { employee: { select: { name: true } } },
+  const settings = await getSettings();
+  const now = new Date();
+  const { start, end } = bangkokDayRange(now);
+  const workDayToday = isWorkDay(now, settings);
+  const todayKey = dateKey(now);
+
+  const [employees, entries, absences] = await Promise.all([
+    prisma.employee.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      include: { role: true },
+    }),
+    prisma.timeEntry.findMany({
+      where: { timestamp: { gte: start, lt: end } },
+      orderBy: { timestamp: "asc" },
+    }),
+    prisma.absenceRequest.findMany({
+      where: { status: "approved", date: { gte: start, lt: end } },
+    }),
+  ]);
+
+  const approvedLeaveEmployeeIds = new Set(
+    absences.filter((a) => a.employeeId).map((a) => a.employeeId as string)
+  );
+
+  const pastDeadline = computeLate(now, settings);
+
+  type Row = {
+    employeeId: string;
+    name: string;
+    colorGroup: string;
+    roleName: string | null;
+    status: "present" | "late" | "absent" | "leave" | "pending" | "off";
+    clockIn: Date | null;
+    clockOut: Date | null;
+  };
+
+  const rows: Row[] = employees.map((emp) => {
+    const empEntries = entries.filter((e) => e.employeeId === emp.id);
+    const inEntry = empEntries.find((e) => e.type === "IN") ?? null;
+    const outEntry = [...empEntries].reverse().find((e) => e.type === "OUT") ?? null;
+
+    let status: Row["status"];
+    if (inEntry) {
+      status = inEntry.late ? "late" : "present";
+    } else if (!workDayToday) {
+      status = "off";
+    } else if (approvedLeaveEmployeeIds.has(emp.id)) {
+      status = "leave";
+    } else if (pastDeadline) {
+      status = "absent";
+    } else {
+      status = "pending";
+    }
+
+    return {
+      employeeId: emp.id,
+      name: emp.name,
+      colorGroup: emp.colorGroup,
+      roleName: emp.role?.name ?? null,
+      status,
+      clockIn: inEntry?.timestamp ?? null,
+      clockOut: outEntry?.timestamp ?? null,
+    };
   });
+
+  const counts = {
+    present: rows.filter((r) => r.status === "present").length,
+    late: rows.filter((r) => r.status === "late").length,
+    absent: rows.filter((r) => r.status === "absent").length,
+    leave: rows.filter((r) => r.status === "leave").length,
+  };
+
+  const statusLabel: Record<Row["status"], string> = {
+    present: "ตรงเวลา",
+    late: "สาย",
+    absent: "ขาดงาน",
+    leave: "ลา",
+    pending: "ยังไม่มา",
+    off: "วันหยุด",
+  };
+
+  const statusClass: Record<Row["status"], string> = {
+    present: "bg-success-bg text-success",
+    late: "bg-warn-bg text-warn",
+    absent: "bg-danger-bg text-danger",
+    leave: "bg-blue-100 text-blue-700",
+    pending: "bg-cream text-muted",
+    off: "bg-cream text-muted",
+  };
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-4">Time Logs</h1>
-      {entries.length === 0 ? (
-        <p className="text-sm text-gray-500">No clock in/out entries yet.</p>
-      ) : (
-        <div className="overflow-x-auto border border-gray-200 rounded-md">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left">
+      <h1 className="text-xl font-semibold mb-1">ภาพรวมวันนี้</h1>
+      <p className="text-sm text-muted mb-6">{formatThaiDate(now)}</p>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <StatCard label="ตรงเวลา" value={counts.present} tone="success" />
+        <StatCard label="สาย" value={counts.late} tone="warn" />
+        <StatCard label="ขาดงาน" value={counts.absent} tone="danger" />
+        <StatCard label="ลา" value={counts.leave} tone="muted" />
+      </div>
+
+      <div className="app-card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-cream text-left">
+            <tr>
+              <th className="px-4 py-3 font-medium rounded-tl-3xl">พนักงาน</th>
+              <th className="px-4 py-3 font-medium">ตำแหน่ง</th>
+              <th className="px-4 py-3 font-medium">เข้างาน</th>
+              <th className="px-4 py-3 font-medium">ออกงาน</th>
+              <th className="px-4 py-3 font-medium rounded-tr-3xl">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
               <tr>
-                <th className="px-4 py-2 font-medium">Employee</th>
-                <th className="px-4 py-2 font-medium">Type</th>
-                <th className="px-4 py-2 font-medium">Time</th>
-                <th className="px-4 py-2 font-medium">Location</th>
+                <td colSpan={5} className="px-4 py-6 text-center text-muted">
+                  ยังไม่มีพนักงานที่เปิดใช้งาน
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2">{entry.employee.name}</td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={
-                        entry.type === "IN"
-                          ? "text-green-600 font-medium"
-                          : "text-gray-500 font-medium"
-                      }
-                    >
-                      {entry.type === "IN" ? "Clock In" : "Clock Out"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap">
-                    {entry.timestamp.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2">
-                    {entry.latitude != null && entry.longitude != null ? (
-                      <a
-                        className="text-blue-600 underline"
-                        target="_blank"
-                        rel="noreferrer"
-                        href={`https://www.google.com/maps?q=${entry.latitude},${entry.longitude}`}
-                      >
-                        {entry.latitude.toFixed(5)}, {entry.longitude.toFixed(5)}
-                      </a>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ) : (
+              rows.map((row) => {
+                const meta = colorGroupMeta(row.colorGroup);
+                return (
+                  <tr key={row.employeeId} className="border-t border-border">
+                    <td className="px-4 py-3 font-medium">
+                      <span className="inline-flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${meta.dot}`} />
+                        {row.name}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted">{row.roleName ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      {row.clockIn ? formatThaiTime(row.clockIn) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.clockOut ? formatThaiTime(row.clockOut) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`app-badge ${statusClass[row.status]}`}>
+                        {statusLabel[row.status]}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted mt-3">อ้างอิงวันที่: {todayKey}</p>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "success" | "warn" | "danger" | "muted";
+}) {
+  const toneClass = {
+    success: "text-success",
+    warn: "text-warn",
+    danger: "text-danger",
+    muted: "text-muted",
+  }[tone];
+
+  return (
+    <div className="app-card p-5">
+      <p className="text-sm text-muted mb-1">{label}</p>
+      <p className={`text-3xl font-semibold ${toneClass}`}>{value}</p>
     </div>
   );
 }

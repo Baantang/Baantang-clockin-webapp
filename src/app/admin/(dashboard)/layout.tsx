@@ -3,6 +3,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminSignOutLink from "./AdminSignOutLink";
 
+const NAV_ITEMS = [
+  { href: "/admin", label: "วันนี้" },
+  { href: "/admin/summary", label: "สรุปเวลาทำงาน" },
+  { href: "/admin/employees", label: "พนักงาน" },
+  { href: "/admin/locations", label: "สถานที่" },
+  { href: "/admin/messages", label: "ข้อความ LINE" },
+  { href: "/admin/settings", label: "ตั้งค่า" },
+  { href: "/admin/account", label: "บัญชี" },
+];
+
 export default async function AdminLayout({
   children,
 }: {
@@ -15,28 +25,25 @@ export default async function AdminLayout({
 
   return (
     <div className="flex-1 flex flex-col">
-      <header className="border-b border-gray-200">
-        <nav className="max-w-4xl mx-auto flex items-center gap-6 px-6 py-3 text-sm">
-          <span className="font-semibold mr-2">Admin</span>
-          <Link href="/admin" className="hover:underline">
-            Time Logs
-          </Link>
-          <Link href="/admin/employees" className="hover:underline">
-            Employees
-          </Link>
-          <Link href="/admin/messages" className="hover:underline">
-            LINE Messages
-          </Link>
-          <Link href="/admin/account" className="hover:underline">
-            Account
-          </Link>
-          <span className="ml-auto flex items-center gap-4">
-            <span className="text-gray-400">{session.username}</span>
+      <header className="border-b border-border bg-card">
+        <nav className="max-w-5xl mx-auto flex items-center gap-1 px-6 py-3 text-sm overflow-x-auto">
+          <span className="font-semibold mr-3 whitespace-nowrap">ผู้ดูแลระบบ</span>
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="px-3 py-1.5 rounded-full whitespace-nowrap text-ink hover:bg-cream transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+          <span className="ml-auto flex items-center gap-4 whitespace-nowrap pl-4">
+            <span className="text-muted">{session.username}</span>
             <AdminSignOutLink />
           </span>
         </nav>
       </header>
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6">{children}</main>
+      <main className="flex-1 max-w-5xl w-full mx-auto p-6">{children}</main>
     </div>
   );
 }

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   if (!employeeId || !pin) {
     return NextResponse.json(
-      { error: "Missing employeeId or pin" },
+      { error: "กรุณาเลือกชื่อและกรอกรหัส PIN" },
       { status: 400 }
     );
   }
@@ -18,12 +18,12 @@ export async function POST(request: NextRequest) {
   });
 
   if (!employee || !employee.active) {
-    return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });
+    return NextResponse.json({ error: "รหัส PIN ไม่ถูกต้อง" }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(pin, employee.pinHash);
   if (!valid) {
-    return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });
+    return NextResponse.json({ error: "รหัส PIN ไม่ถูกต้อง" }, { status: 401 });
   }
 
   await createSession({

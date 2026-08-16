@@ -1,26 +1,126 @@
 @import "tailwindcss";
 
+/*
+  Fixed warm white / cream theme (this app always looks like this,
+  regardless of the visitor's system dark-mode setting — it's a
+  work tool that should look the same for every employee).
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-app: #fdf9f0;
+  --color-card: #ffffff;
+  --color-cream: #faf1de;
+  --color-cream-dark: #f2e2c0;
+  --color-border: #ecdfc4;
+  --color-ink: #3a2f22;
+  --color-muted: #8c7f68;
+  --color-primary: #d98a3d;
+  --color-primary-dark: #b96f28;
+  --color-on-primary: #ffffff;
+  --color-success: #4c9a6a;
+  --color-success-bg: #e7f4ec;
+  --color-danger: #d9604a;
+  --color-danger-bg: #fbeae5;
+  --color-warn: #c98a2e;
+  --color-warn-bg: #fbf0dc;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-app: var(--color-app);
+  --color-card: var(--color-card);
+  --color-cream: var(--color-cream);
+  --color-cream-dark: var(--color-cream-dark);
+  --color-border: var(--color-border);
+  --color-ink: var(--color-ink);
+  --color-muted: var(--color-muted);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-on-primary: var(--color-on-primary);
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-danger: var(--color-danger);
+  --color-danger-bg: var(--color-danger-bg);
+  --color-warn: var(--color-warn);
+  --color-warn-bg: var(--color-warn-bg);
+  --font-sans: var(--font-thai);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-app);
+  color: var(--color-ink);
+  font-family: var(--font-thai), "Noto Sans Thai", ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--color-cream-dark);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Shared building blocks so every screen reads as one rounded, cream/white system. */
+.app-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px rgba(58, 47, 34, 0.04);
+}
+
+.app-input {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-app);
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.app-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(217, 138, 61, 0.15);
+}
+
+.app-btn-primary {
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  padding: 0.7rem 1.5rem;
+  transition: background-color 0.15s ease;
+}
+
+.app-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.app-btn-primary:disabled {
+  opacity: 0.5;
+}
+
+.app-btn-secondary {
+  border-radius: 999px;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-weight: 600;
+  padding: 0.7rem 1.5rem;
+  border: 1px solid var(--color-border);
+  transition: background-color 0.15s ease;
+}
+
+.app-btn-secondary:hover:not(:disabled) {
+  background: var(--color-cream-dark);
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
 }

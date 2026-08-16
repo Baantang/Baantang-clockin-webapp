@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { COLOR_GROUPS } from "@/lib/attendance";
 
 export async function PATCH(
   request: NextRequest,
@@ -12,12 +13,28 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { active } = await request.json();
+  const body = await request.json();
 
-  const employee = await prisma.employee.update({
-    where: { id },
-    data: { active: Boolean(active) },
+  const data: {
+    active?: boolean;
+    colorGroup?: string;
+    roleId?: string | null;
+  } = {};
+
+  if (typeof body.active === "boolean") data.active = body.active;
+  if (typeof body.colorGroup === "string" && COLOR_GROUPS.some((g) => g.value === body.colorGroup)) {
+    data.colorGroup = body.colorGroup;
+  }
+  if ("roleId" in body) {
+    data.roleId = body.roleId || null;
+  }
+
+  const employee = await prisma.employee.update({ where: { id }, data });
+
+  return NextResponse.json({
+    id: employee.id,
+    active: employee.active,
+    colorGroup: employee.colorGroup,
+    roleId: employee.roleId,
   });
-
-  return NextResponse.json({ id: employee.id, active: employee.active });
 }

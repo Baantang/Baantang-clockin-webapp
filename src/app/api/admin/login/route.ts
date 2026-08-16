@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
   if (!username || !password) {
     return NextResponse.json(
-      { error: "Missing username or password" },
+      { error: "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน" },
       { status: 400 }
     );
   }
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const admin = await prisma.admin.findUnique({ where: { username } });
   if (!admin) {
     return NextResponse.json(
-      { error: "Invalid username or password" },
+      { error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" },
       { status: 401 }
     );
   }
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const valid = await bcrypt.compare(password, admin.passwordHash);
   if (!valid) {
     return NextResponse.json(
-      { error: "Invalid username or password" },
+      { error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" },
       { status: 401 }
     );
   }

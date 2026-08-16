@@ -25,7 +25,7 @@ export default function AdminLoginForm() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Login failed");
+      setError(data.error ?? "เข้าสู่ระบบไม่สำเร็จ");
       return;
     }
 
@@ -36,32 +36,28 @@ export default function AdminLoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Username</label>
+        <label className="block text-sm font-medium mb-1.5">ชื่อผู้ใช้</label>
         <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-base"
+          className="app-input"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Password</label>
+        <label className="block text-sm font-medium mb-1.5">รหัสผ่าน</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-base"
+          className="app-input"
           required
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-black text-white py-2.5 font-medium disabled:opacity-50"
-      >
-        {loading ? "Signing in..." : "Sign in"}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <button type="submit" disabled={loading} className="app-btn-primary w-full">
+        {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
       </button>
     </form>
   );

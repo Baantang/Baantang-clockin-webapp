@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { COLOR_GROUPS } from "@/lib/attendance";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -9,18 +10,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, pin } = await request.json();
+  const { name, pin, colorGroup, roleId } = await request.json();
 
   if (!name || !pin || !/^\d{4,8}$/.test(pin)) {
     return NextResponse.json(
-      { error: "Name and a 4-8 digit PIN are required" },
+      { error: "กรุณากรอกชื่อและรหัส PIN 4-8 หลัก" },
       { status: 400 }
     );
   }
 
+  const validColorGroup = COLOR_GROUPS.some((g) => g.value === colorGroup)
+    ? colorGroup
+    : "blue";
+
   const pinHash = await bcrypt.hash(pin, 10);
   const employee = await prisma.employee.create({
-    data: { name, pinHash },
+    data: {
+      name,
+      pinHash,
+      colorGroup: validColorGroup,
+      roleId: roleId || null,
+    },
   });
 
   return NextResponse.json({ id: employee.id, name: employee.name });

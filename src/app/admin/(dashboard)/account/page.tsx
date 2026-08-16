@@ -6,13 +6,13 @@ export default async function AccountPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-1">Account</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Signed in as {session && "username" in session ? session.username : ""}
+      <h1 className="text-xl font-semibold mb-1">บัญชีผู้ใช้</h1>
+      <p className="text-sm text-muted mb-6">
+        เข้าสู่ระบบในชื่อ {session && "username" in session ? session.username : ""}
       </p>
 
-      <div className="max-w-sm">
-        <h2 className="text-sm font-medium mb-3">Change password</h2>
+      <div className="app-card p-6 max-w-sm">
+        <h2 className="text-sm font-medium mb-3">เปลี่ยนรหัสผ่าน</h2>
         <ChangePasswordForm />
       </div>
     </div>

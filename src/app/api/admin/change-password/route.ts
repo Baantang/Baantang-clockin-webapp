@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   if (!currentPassword || !newPassword || newPassword.length < 8) {
     return NextResponse.json(
-      { error: "New password must be at least 8 characters" },
+      { error: "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร" },
       { status: 400 }
     );
   }
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const valid = await bcrypt.compare(currentPassword, admin.passwordHash);
   if (!valid) {
     return NextResponse.json(
-      { error: "Current password is incorrect" },
+      { error: "รหัสผ่านปัจจุบันไม่ถูกต้อง" },
       { status: 401 }
     );
   }

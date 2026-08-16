@@ -12,6 +12,7 @@ export default function ClockPanel({
   const [status, setStatus] = useState<Status>(initialStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [late, setLate] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function getLocation(): Promise<GeolocationPosition | null> {
@@ -37,7 +38,7 @@ export default function ClockPanel({
     if (!position) {
       setLoading(false);
       setError(
-        "Location is required to clock in/out. Please allow location access and try again."
+        "จำเป็นต้องเปิดสิทธิ์เข้าถึงตำแหน่งที่ตั้ง (Location) กรุณาอนุญาตแล้วลองใหม่อีกครั้ง"
       );
       return;
     }
@@ -57,15 +58,23 @@ export default function ClockPanel({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Something went wrong");
+      setError(data.error ?? "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
       return;
     }
 
+    const data = await res.json();
     setStatus(nextType);
+    setLate(Boolean(data.entry?.late));
     setMessage(
       nextType === "IN"
-        ? `Clocked in at ${new Date().toLocaleTimeString()}`
-        : `Clocked out at ${new Date().toLocaleTimeString()}`
+        ? `ลงเวลาเข้างานเมื่อ ${new Date().toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })} น.`
+        : `ลงเวลาออกงานเมื่อ ${new Date().toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })} น.`
     );
   }
 
@@ -73,33 +82,45 @@ export default function ClockPanel({
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
-        Current status:{" "}
+      <p className="text-sm text-muted mb-4">
+        สถานะปัจจุบัน:{" "}
         <span
           className={
-            status === "IN"
-              ? "font-semibold text-green-600"
-              : "font-semibold text-gray-500"
+            status === "IN" ? "font-semibold text-success" : "font-semibold text-muted"
           }
         >
-          {status === "IN" ? "Clocked In" : "Clocked Out"}
+          {status === "IN" ? "อยู่ระหว่างเวลางาน" : "ยังไม่ได้ลงเวลาเข้างาน"}
         </span>
       </p>
       <button
         onClick={() => handleClock(nextType)}
         disabled={loading}
-        className={`w-full rounded-md py-4 text-lg font-semibold text-white disabled:opacity-50 ${
-          nextType === "IN" ? "bg-green-600" : "bg-gray-800"
+        className={`w-full rounded-3xl py-6 text-lg font-semibold text-on-primary disabled:opacity-50 shadow-sm ${
+          nextType === "IN" ? "bg-success" : "bg-ink"
         }`}
       >
         {loading
-          ? "Getting location..."
+          ? "กำลังระบุตำแหน่ง..."
           : nextType === "IN"
-            ? "Clock In"
-            : "Clock Out"}
+            ? "ลงเวลาเข้างาน"
+            : "ลงเวลาออกงาน"}
       </button>
-      {message && <p className="mt-4 text-sm text-green-700">{message}</p>}
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {message && (
+        <div className="mt-4">
+          <p className="text-sm text-success font-medium">{message}</p>
+          {nextType === "OUT" && late && (
+            <span className="app-badge mt-2" style={{ background: "var(--color-warn-bg)", color: "var(--color-warn)" }}>
+              สาย
+            </span>
+          )}
+          {nextType === "OUT" && !late && (
+            <span className="app-badge mt-2" style={{ background: "var(--color-success-bg)", color: "var(--color-success)" }}>
+              ตรงเวลา
+            </span>
+          )}
+        </div>
+      )}
+      {error && <p className="mt-4 text-sm text-danger">{error}</p>}
     </div>
   );
 }

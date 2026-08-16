@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { computeLate, findMatchingLocation } from "@/lib/attendance";
+import { getSettings } from "@/lib/settings";
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -14,13 +16,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
+  if (typeof latitude !== "number" || typeof longitude !== "number") {
+    return NextResponse.json(
+      { error: "จำเป็นต้องเปิดตำแหน่งที่ตั้ง (Location) เพื่อลงเวลา" },
+      { status: 400 }
+    );
+  }
+
+  const locations = await prisma.location.findMany({ where: { active: true } });
+
+  let locationId: string | null = null;
+  if (locations.length > 0) {
+    const match = findMatchingLocation(latitude, longitude, locations);
+    if (!match) {
+      return NextResponse.json(
+        { error: "คุณอยู่นอกพื้นที่ที่กำหนด ไม่สามารถลงเวลาได้" },
+        { status: 403 }
+      );
+    }
+    locationId = match.id;
+  }
+
+  let late = false;
+  if (type === "IN") {
+    const settings = await getSettings();
+    late = computeLate(new Date(), settings);
+  }
+
   const entry = await prisma.timeEntry.create({
     data: {
       employeeId: session.employeeId,
       type,
-      latitude: typeof latitude === "number" ? latitude : null,
-      longitude: typeof longitude === "number" ? longitude : null,
+      latitude,
+      longitude,
       accuracy: typeof accuracy === "number" ? accuracy : null,
+      late,
+      locationId,
     },
   });
 

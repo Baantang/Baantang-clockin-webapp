@@ -27,7 +27,7 @@ export default function ChangePasswordForm() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to change password");
+      setError(data.error ?? "เปลี่ยนรหัสผ่านไม่สำเร็จ");
       return;
     }
 
@@ -40,40 +40,30 @@ export default function ChangePasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <label className="block text-sm font-medium mb-1">
-          Current password
-        </label>
+        <label className="block text-sm font-medium mb-1.5">รหัสผ่านปัจจุบัน</label>
         <input
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="app-input"
           required
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
-          New password
-        </label>
+        <label className="block text-sm font-medium mb-1.5">รหัสผ่านใหม่</label>
         <input
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="app-input"
           minLength={8}
           required
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {success && (
-        <p className="text-sm text-green-700">Password updated.</p>
-      )}
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-md bg-black text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
-      >
-        {loading ? "Updating..." : "Update password"}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {success && <p className="text-sm text-success">เปลี่ยนรหัสผ่านเรียบร้อยแล้ว</p>}
+      <button type="submit" disabled={loading} className="app-btn-primary">
+        {loading ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}
       </button>
     </form>
   );

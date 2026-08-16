@@ -12,8 +12,8 @@ export default function AdminSignOutLink() {
   }
 
   return (
-    <button onClick={handleSignOut} className="text-gray-400 underline">
-      Sign out
+    <button onClick={handleSignOut} className="text-muted underline">
+      ออกจากระบบ
     </button>
   );
 }
