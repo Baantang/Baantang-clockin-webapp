@@ -16,9 +16,9 @@ export default function Home() {
           </Link>
           <Link
             href="/admin/login"
-            className="text-xs text-muted underline rounded-md px-2 py-1 hover:text-ink"
+            className="text-sm text-ink/70 underline underline-offset-2 rounded-md px-2 py-1.5 mt-1 hover:text-ink"
           >
-            ผู้ดูแลระบบ
+            เข้าสู่ระบบสำหรับผู้ดูแลระบบ
           </Link>
         </div>
       </div>
