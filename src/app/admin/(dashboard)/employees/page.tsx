@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import NewEmployeeForm from "./NewEmployeeForm";
 import EmployeeRow from "./EmployeeRow";
+import BulkImportForm from "./BulkImportForm";
 
 export default async function EmployeesPage() {
   const [employees, roles] = await Promise.all([
@@ -15,8 +16,12 @@ export default async function EmployeesPage() {
     <div>
       <h1 className="text-xl font-semibold mb-4">พนักงาน</h1>
 
-      <div className="app-card p-6 mb-6 max-w-md">
+      <div className="app-card p-6 mb-2 max-w-md">
         <NewEmployeeForm roles={roles} />
+      </div>
+
+      <div className="mb-6">
+        <BulkImportForm roles={roles} />
       </div>
 
       <div className="app-card overflow-x-auto">

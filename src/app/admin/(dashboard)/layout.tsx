@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/admin/employees", label: "พนักงาน" },
   { href: "/admin/locations", label: "สถานที่" },
   { href: "/admin/messages", label: "ข้อความ LINE" },
+  { href: "/admin/sheets", label: "Google Sheets" },
   { href: "/admin/settings", label: "ตั้งค่า" },
   { href: "/admin/account", label: "บัญชี" },
 ];
