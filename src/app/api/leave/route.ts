@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
 
-const LEAVE_TYPES = new Set(["ลากิจ", "ลาป่วย", "ลาพักร้อน", "อื่นๆ"]);
+const LEAVE_TYPES = new Set([
+  "ลากิจ",
+  "ลากิจแบบไม่รับค่าจ้าง",
+  "ลาป่วย",
+  "ลาพักร้อน",
+  "อื่นๆ",
+]);
 
 export async function POST(request: NextRequest) {
   const session = await getSession();

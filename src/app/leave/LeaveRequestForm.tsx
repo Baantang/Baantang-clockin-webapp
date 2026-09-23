@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const LEAVE_TYPES = ["ลากิจ", "ลาป่วย", "ลาพักร้อน", "อื่นๆ"];
+const LEAVE_TYPES = ["ลากิจ", "ลากิจแบบไม่รับค่าจ้าง", "ลาป่วย", "ลาพักร้อน", "อื่นๆ"];
 
 export default function LeaveRequestForm() {
   const router = useRouter();
