@@ -1,50 +1,64 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SheetsSyncForm({
   roles,
   defaultStart,
   defaultEnd,
   disabled,
+  needsShareEmail,
 }: {
   roles: { id: string; name: string }[];
   defaultStart: string;
   defaultEnd: string;
   disabled: boolean;
+  needsShareEmail: boolean;
 }) {
+  const router = useRouter();
   const [sheetTitle, setSheetTitle] = useState("");
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
   const [roleId, setRoleId] = useState("");
+  const [shareEmail, setShareEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [successUrl, setSuccessUrl] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
+    setSuccessUrl(null);
     setLoading(true);
 
     const res = await fetch("/api/admin/sheets-sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sheetTitle, startDate, endDate, roleId: roleId || null }),
+      body: JSON.stringify({
+        sheetTitle,
+        startDate,
+        endDate,
+        roleId: roleId || null,
+        shareEmail: shareEmail || null,
+      }),
     });
 
     setLoading(false);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "ซิงก์ไม่สำเร็จ");
+      if (data.needsShareEmail) {
+        setError("กรอกอีเมล Google ของคุณด้านล่างก่อน เพื่อสร้าง Sheet ใหม่และแชร์ให้คุณ");
+      } else {
+        setError(data.error ?? "ซิงก์ไม่สำเร็จ");
+      }
       return;
     }
 
     const data = await res.json();
-    setSuccess(
-      `ซิงก์สำเร็จ — ${data.employeeCount} คน, ${data.dayCount} วัน ไปยังแท็บ "${sheetTitle}"`
-    );
+    setSuccessUrl(data.url);
+    router.refresh();
   }
 
   return (
@@ -99,8 +113,32 @@ export default function SheetsSyncForm({
           ))}
         </select>
       </div>
+      {needsShareEmail && (
+        <div>
+          <label className="block text-sm font-medium mb-1.5">
+            อีเมล Google ของคุณ
+          </label>
+          <input
+            type="email"
+            value={shareEmail}
+            onChange={(e) => setShareEmail(e.target.value)}
+            className="app-input"
+            placeholder="you@gmail.com"
+          />
+          <p className="text-xs text-muted mt-1">
+            ใช้ครั้งแรกเท่านั้น เพื่อสร้าง Google Sheet ใหม่และแชร์ให้คุณดูได้
+          </p>
+        </div>
+      )}
       {error && <p className="text-sm text-danger">{error}</p>}
-      {success && <p className="text-sm text-success">{success}</p>}
+      {successUrl && (
+        <p className="text-sm text-success">
+          ซิงก์สำเร็จ —{" "}
+          <a href={successUrl} target="_blank" rel="noreferrer" className="underline">
+            เปิด Google Sheet
+          </a>
+        </p>
+      )}
       <button type="submit" disabled={loading || disabled} className="app-btn-primary">
         {loading ? "กำลังซิงก์..." : "ซิงก์กับ Google Sheet"}
       </button>

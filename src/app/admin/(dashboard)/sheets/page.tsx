@@ -1,13 +1,21 @@
 import { prisma } from "@/lib/db";
-import { googleSheetsEnabled } from "@/lib/googleSheets";
+import { googleSheetsEnabled, sheetUrl } from "@/lib/googleSheets";
 import { dateKey } from "@/lib/attendance";
 import SheetsSyncForm from "./SheetsSyncForm";
 
 export default async function SheetsPage() {
-  const roles = await prisma.role.findMany({ orderBy: { name: "asc" } });
+  const [roles, settings] = await Promise.all([
+    prisma.role.findMany({ orderBy: { name: "asc" } }),
+    prisma.settings.upsert({
+      where: { id: "singleton" },
+      update: {},
+      create: { id: "singleton" },
+    }),
+  ]);
 
   const now = new Date();
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const existingSheetId = process.env.GOOGLE_SHEET_ID || settings.googleSheetId;
 
   return (
     <div>
@@ -22,9 +30,22 @@ export default async function SheetsPage() {
             ยังไม่ได้เชื่อมต่อ Google Sheets
           </p>
           <p className="text-sm text-muted">
-            ต้องตั้งค่า GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY และ GOOGLE_SHEET_ID
-            ก่อนใช้งานฟีเจอร์นี้ได้
+            ต้องตั้งค่า GOOGLE_SERVICE_ACCOUNT_EMAIL และ GOOGLE_PRIVATE_KEY ก่อนใช้งานฟีเจอร์นี้ได้
           </p>
+        </div>
+      )}
+
+      {googleSheetsEnabled() && existingSheetId && (
+        <div className="app-card p-6 mb-6" style={{ background: "var(--color-success-bg)" }}>
+          <p className="text-sm text-success font-medium mb-1">เชื่อมต่อ Google Sheet แล้ว</p>
+          <a
+            href={sheetUrl(existingSheetId)}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-primary underline"
+          >
+            เปิด Google Sheet →
+          </a>
         </div>
       )}
 
@@ -34,6 +55,7 @@ export default async function SheetsPage() {
           defaultStart={dateKey(firstOfMonth)}
           defaultEnd={dateKey(now)}
           disabled={!googleSheetsEnabled()}
+          needsShareEmail={!existingSheetId}
         />
       </div>
     </div>

@@ -81,6 +81,7 @@ model Settings {
   workEnd          String   @default("17:00")
   lateGraceMinutes Int      @default(0)
   workDays         String   @default("1,2,3,4,5") // 0=Sun .. 6=Sat, comma separated
+  googleSheetId    String? // auto-created by the app on first Google Sheets sync
   updatedAt        DateTime @updatedAt
 }
 

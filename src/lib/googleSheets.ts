@@ -4,9 +4,7 @@ import { bangkokDayRange, dateKey, formatThaiTime } from "@/lib/attendance";
 
 export function googleSheetsEnabled() {
   return Boolean(
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
-      process.env.GOOGLE_PRIVATE_KEY &&
-      process.env.GOOGLE_SHEET_ID
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY
   );
 }
 
@@ -17,8 +15,58 @@ function getAuth() {
   return new google.auth.JWT({
     email,
     key: key.replace(/\\n/g, "\n"),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    scopes: [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive.file",
+    ],
   });
+}
+
+export function sheetUrl(spreadsheetId: string) {
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
+}
+
+/**
+ * Returns the spreadsheet to sync into, creating one the first time this
+ * runs and remembering its id in Settings so every later sync reuses it.
+ * A GOOGLE_SHEET_ID env var, if set, always wins (points at an existing
+ * sheet instead).
+ */
+export async function ensureSpreadsheetId(shareEmail?: string | null): Promise<string> {
+  if (process.env.GOOGLE_SHEET_ID) return process.env.GOOGLE_SHEET_ID;
+
+  const settings = await prisma.settings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
+  if (settings.googleSheetId) return settings.googleSheetId;
+
+  if (!shareEmail) {
+    throw new Error("NEED_SHARE_EMAIL");
+  }
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const drive = google.drive({ version: "v3", auth });
+
+  const created = await sheets.spreadsheets.create({
+    requestBody: { properties: { title: "บันทึกลงเวลาพนักงาน" } },
+  });
+  const spreadsheetId = created.data.spreadsheetId!;
+
+  await drive.permissions.create({
+    fileId: spreadsheetId,
+    sendNotificationEmail: false,
+    requestBody: { type: "user", role: "writer", emailAddress: shareEmail },
+  });
+
+  await prisma.settings.update({
+    where: { id: "singleton" },
+    data: { googleSheetId: spreadsheetId },
+  });
+
+  return spreadsheetId;
 }
 
 interface SyncOptions {
@@ -26,6 +74,7 @@ interface SyncOptions {
   endDate: Date;
   roleId?: string | null;
   sheetTitle: string;
+  shareEmail?: string | null;
 }
 
 export async function syncAttendanceToSheet({
@@ -33,8 +82,9 @@ export async function syncAttendanceToSheet({
   endDate,
   roleId,
   sheetTitle,
+  shareEmail,
 }: SyncOptions) {
-  const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
+  const spreadsheetId = await ensureSpreadsheetId(shareEmail);
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth });
 
@@ -129,5 +179,5 @@ export async function syncAttendanceToSheet({
     requestBody: { values: rows },
   });
 
-  return { employeeCount: employees.length, dayCount: days.length };
+  return { employeeCount: employees.length, dayCount: days.length, spreadsheetId };
 }
