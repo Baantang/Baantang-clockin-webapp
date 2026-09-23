@@ -86,8 +86,15 @@ export default async function SummaryPage(props: PageProps<"/admin/summary">) {
       select: { employeeId: true, type: true, timestamp: true, late: true },
     }),
     prisma.absenceRequest.findMany({
-      where: { status: "approved", date: { gte: queryStart, lt: queryEnd } },
-      select: { employeeId: true, date: true, status: true },
+      where: {
+        status: "approved",
+        OR: [
+          { date: { gte: queryStart, lt: queryEnd } },
+          { endDate: { gte: queryStart, lt: queryEnd } },
+          { AND: [{ date: { lt: queryStart } }, { endDate: { gte: queryEnd } }] },
+        ],
+      },
+      select: { employeeId: true, date: true, endDate: true, status: true },
     }),
   ]);
 

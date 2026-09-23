@@ -184,6 +184,7 @@ interface RawEntry {
 interface RawAbsence {
   employeeId: string | null;
   date: Date;
+  endDate: Date | null;
   status: string;
 }
 
@@ -204,11 +205,15 @@ export function buildAttendanceSummary(
   const approvedLeaveByEmployee = new Map<string, Set<string>>();
   for (const a of absences) {
     if (!a.employeeId || a.status !== "approved") continue;
-    const key = dateKey(a.date);
     if (!approvedLeaveByEmployee.has(a.employeeId)) {
       approvedLeaveByEmployee.set(a.employeeId, new Set());
     }
-    approvedLeaveByEmployee.get(a.employeeId)!.add(key);
+    const set = approvedLeaveByEmployee.get(a.employeeId)!;
+    const start = startOfBangkokDay(a.date);
+    const end = a.endDate ? startOfBangkokDay(a.endDate) : start;
+    for (let d = start; d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
+      set.add(dateKey(d));
+    }
   }
 
   const today = startOfBangkokDay(new Date());

@@ -115,10 +115,13 @@ model LineMessage {
 // originating LineMessage and turns it into a request, then approves or
 // rejects it; approved requests count as excused leave in the summaries.
 model AbsenceRequest {
-  id     String    @id @default(cuid())
-  date   DateTime // the calendar date the employee will be / was absent
-  note   String?
-  status String    @default("pending") // pending | approved | rejected
+  id        String    @id @default(cuid())
+  date      DateTime // first (or only) day of the leave
+  endDate   DateTime? // last day of the leave; null = single-day leave
+  leaveType String    @default("อื่นๆ") // ลากิจ | ลาป่วย | ลาพักร้อน | อื่นๆ
+  note      String?
+  status    String    @default("pending") // pending | approved | rejected
+  decisionNote String? // admin's note, e.g. reason for rejection
 
   employeeId String?
   employee   Employee? @relation(fields: [employeeId], references: [id])

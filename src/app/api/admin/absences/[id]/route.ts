@@ -12,7 +12,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { status } = await request.json();
+  const { status, decisionNote } = await request.json();
 
   if (status !== "approved" && status !== "rejected") {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
@@ -20,7 +20,7 @@ export async function PATCH(
 
   const absence = await prisma.absenceRequest.update({
     where: { id },
-    data: { status, decidedAt: new Date() },
+    data: { status, decidedAt: new Date(), decisionNote: decisionNote || null },
   });
 
   return NextResponse.json({ absence });

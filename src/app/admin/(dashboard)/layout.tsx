@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/admin/timelog", label: "ประวัติเวลา" },
   { href: "/admin/employees", label: "พนักงาน" },
   { href: "/admin/locations", label: "สถานที่" },
+  { href: "/admin/leaves", label: "ใบลา" },
   { href: "/admin/messages", label: "ข้อความ LINE" },
   { href: "/admin/sheets", label: "Google Sheets" },
   { href: "/admin/settings", label: "ตั้งค่า" },

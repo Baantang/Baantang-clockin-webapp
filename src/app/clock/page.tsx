@@ -55,9 +55,12 @@ export default async function ClockPage() {
 
           <ClockPanel initialStatus={lastEntry?.type === "IN" ? "IN" : "OUT"} />
 
-          <div className="mt-6 flex items-center justify-center text-sm">
+          <div className="mt-6 flex items-center justify-center gap-4 text-sm">
             <Link href="/profile" className="text-primary underline">
               โปรไฟล์ของฉัน
+            </Link>
+            <Link href="/leave" className="text-primary underline">
+              ยื่นใบลา
             </Link>
           </div>
         </div>
